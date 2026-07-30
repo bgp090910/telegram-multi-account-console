@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>訊息日誌｜{{ account.name }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1><a href="/" style="color:#fff;text-decoration:none">← 控制台</a></h1>
+  </div>
+  <div>
+    <h2 style="margin:0;font-size:16px">{{ account.name }} — 訊息日誌</h2>
+    <span class="muted">共 {{ messages|length }} 則</span>
+  </div>
+  <form method="post" action="/logout"><button class="secondary">登出</button></form>
+</header>
+<main class="container">
+  <section class="panel">
+    <form method="get" action="/accounts/{{ account.id }}/messages" class="inline-form">
+      <label>篩選群組 Chat ID
+        <input name="chat_id" type="number" value="{{ chat_id or '' }}" placeholder="留空顯示全部">
+      </label>
+      <label>筆數
+        <input name="limit" type="number" min="10" max="500" value="{{ limit }}">
+      </label>
+      <button type="submit" class="secondary">篩選</button>
+    </form>
+  </section>
+
+  {% if not messages %}
+  <section class="empty">尚無訊息記錄。</section>
+  {% else %}
+  <section class="panel log-container">
+    <div class="log-table">
+      <div class="log-header">
+        <span class="log-col-time">時間</span>
+        <span class="log-col-chat">Chat ID</span>
+        <span class="log-col-user">User ID</span>
+        <span class="log-col-role">角色</span>
+        <span class="log-col-content">內容</span>
+      </div>
+      {% for msg in messages %}
+      <div class="log-row {{ msg.role }}">
+        <span class="log-col-time">{{ msg.created_at[:19] }}</span>
+        <span class="log-col-chat">{{ msg.chat_id }}</span>
+        <span class="log-col-user">{{ msg.user_id }}</span>
+        <span class="log-col-role">
+          <span class="role-badge {{ msg.role }}">{{ msg.role }}</span>
+        </span>
+        <span class="log-col-content">{{ msg.content }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+</body>
+</html>

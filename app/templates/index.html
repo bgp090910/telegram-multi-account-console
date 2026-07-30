@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Telegram 多帳號控制台</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><h1>Telegram 多帳號控制台</h1><span>記憶保存 {{ memory_ttl }} 小時</span></div>
+  <form method="post" action="/logout"><button class="secondary">登出</button></form>
+</header>
+<main class="container">
+  <section class="panel">
+    <details>
+      <summary>新增 Telegram 帳號</summary>
+      <form method="post" action="/accounts" class="grid-form">
+        <label>帳號名稱<input name="name" placeholder="例如：女性老成員 A" required></label>
+        <label>角色類型<select name="role_type"><option>男性老成員</option><option>女性老成員</option><option>男性觀望成員</option><option>女性觀望成員</option></select></label>
+        <label class="wide">Telegram Session String<textarea name="session_string" rows="3" required></textarea></label>
+        <label>AI Base URL<input name="ai_base_url" value="https://api.openai.com/v1" required></label>
+        <label>AI API Key<input name="ai_api_key" type="password" required></label>
+        <label>AI 模型<input name="ai_model" value="gpt-5-mini" required></label>
+        <label>Temperature<input name="temperature" type="number" min="0" max="2" step="0.1" value="0.8"></label>
+        <label>最大輸出 Token<input name="max_tokens" type="number" min="50" max="4000" value="500"></label>
+        <label class="wide">指定群組 ID（逗號分隔；留空代表所有群組）<input name="group_ids" placeholder="-1001234567890,-1009876543210"></label>
+        <label class="wide">用戶黑名單（逗號分隔 user ID；被黑名單的用戶不會觸發 AI）<input name="user_blacklist" placeholder="123456789,987654321"></label>
+        <label>回覆模式<select name="reply_mode"><option value="all">所有訊息</option><option value="mention">僅提及或回覆</option><option value="probability">機率參與</option></select></label>
+        <label>回覆機率<input name="reply_probability" type="number" min="0" max="1" step="0.05" value="1"></label>
+        <label>群組冷卻（秒）<input name="reply_cooldown" type="number" min="0" max="300" step="0.5" value="8"></label>
+        <label>最短延遲（秒）<input name="min_delay" type="number" min="0" step="0.1" value="1"></label>
+        <label>最長延遲（秒）<input name="max_delay" type="number" min="0" step="0.1" value="3"></label>
+        <label class="wide">人物設定<textarea name="persona" rows="9" required>{{ default_persona }}</textarea></label>
+        <label class="checkbox"><input name="enabled" type="checkbox" checked> 新增後立即啟動</label>
+        <div class="wide"><button type="submit">新增帳號</button></div>
+      </form>
+    </details>
+  </section>
+
+  {% if not accounts %}
+  <section class="empty">尚未新增帳號。先用 Session 產生工具取得 Session String。</section>
+  {% endif %}
+
+  {% for account in accounts %}
+  <section class="account-card">
+    <div class="account-head">
+      <div>
+        <h2>{{ account.name }}</h2>
+        <span class="badge {{ account.status }}">{{ account.status }}</span>
+        {% if account.telegram_username %}<span class="muted">@{{ account.telegram_username }}</span>{% endif %}
+      </div>
+      <div class="actions">
+        <a href="/accounts/{{ account.id }}/messages" class="btn-link secondary">訊息日誌</a>
+        <form method="post" action="/accounts/{{ account.id }}/start"><button class="secondary">啟動</button></form>
+        <form method="post" action="/accounts/{{ account.id }}/stop"><button class="secondary">停止</button></form>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <span>已回覆 <strong>{{ account.messages_sent or 0 }}</strong> 則</span>
+      {% if account.last_active_at %}<span>最後活躍 <strong>{{ account.last_active_at[:16] }}</strong></span>{% endif %}
+    </div>
+    {% if account.last_error %}<div class="alert error">{{ account.last_error }}</div>{% endif %}
+    <form method="post" action="/accounts/{{ account.id }}/update" class="grid-form">
+      <label>帳號名稱<input name="name" value="{{ account.name }}" required></label>
+      <label>角色類型<select name="role_type">
+        {% for role in ['男性老成員','女性老成員','男性觀望成員','女性觀望成員'] %}
+        <option {% if account.role_type == role %}selected{% endif %}>{{ role }}</option>
+        {% endfor %}
+      </select></label>
+      <label class="wide">替換 Session String（留空不變）<textarea name="session_string" rows="2"></textarea></label>
+      <label>AI Base URL<input name="ai_base_url" value="{{ account.ai_base_url }}" required></label>
+      <label>替換 AI API Key（留空不變）<input name="ai_api_key" type="password"></label>
+      <label>AI 模型<input name="ai_model" value="{{ account.ai_model }}" required></label>
+      <label>Temperature<input name="temperature" type="number" min="0" max="2" step="0.1" value="{{ account.temperature }}"></label>
+      <label>最大輸出 Token<input name="max_tokens" type="number" min="50" max="4000" value="{{ account.max_tokens }}"></label>
+      <label class="wide">指定群組 ID<input name="group_ids" value="{{ account.group_ids }}"></label>
+      <label class="wide">用戶黑名單<input name="user_blacklist" value="{{ account.user_blacklist }}"></label>
+      <label>回覆模式<select name="reply_mode">
+        <option value="all" {% if account.reply_mode == 'all' %}selected{% endif %}>所有訊息</option>
+        <option value="mention" {% if account.reply_mode == 'mention' %}selected{% endif %}>僅提及或回覆</option>
+        <option value="probability" {% if account.reply_mode == 'probability' %}selected{% endif %}>機率參與</option>
+      </select></label>
+      <label>回覆機率<input name="reply_probability" type="number" min="0" max="1" step="0.05" value="{{ account.reply_probability }}"></label>
+      <label>群組冷卻（秒）<input name="reply_cooldown" type="number" min="0" max="300" step="0.5" value="{{ account.reply_cooldown }}"></label>
+      <label>最短延遲（秒）<input name="min_delay" type="number" min="0" step="0.1" value="{{ account.min_delay }}"></label>
+      <label>最長延遲（秒）<input name="max_delay" type="number" min="0" step="0.1" value="{{ account.max_delay }}"></label>
+      <label class="wide">人物設定<textarea name="persona" rows="10" required>{{ account.persona }}</textarea></label>
+      <label class="checkbox"><input name="enabled" type="checkbox" {% if account.enabled %}checked{% endif %}> 啟用並在服務重啟後自動登入</label>
+      <div class="wide actions">
+        <button type="submit">儲存並重新載入</button>
+      </div>
+    </form>
+    <form method="post" action="/accounts/{{ account.id }}/delete" onsubmit="return confirm('確定刪除此帳號與記憶？')">
+      <button class="danger" type="submit">刪除帳號</button>
+    </form>
+  </section>
+  {% endfor %}
+</main>
+</body>
+</html>

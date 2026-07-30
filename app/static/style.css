@@ -1,0 +1,89 @@
+:root{font-family:Inter,system-ui,-apple-system,"Noto Sans TC",sans-serif;color:#18202a;background:#f4f6f8}
+*{box-sizing:border-box}
+body{margin:0}
+
+/* Top bar */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 5vw;background:#111827;color:#fff}
+.topbar h1{margin:0;font-size:22px}
+.topbar h2{margin:0}
+.topbar span{font-size:13px;color:#cbd5e1}
+
+/* Layout */
+.container{max-width:1180px;margin:24px auto;padding:0 18px}
+.panel,.account-card,.empty,.login-card{background:#fff;border:1px solid #dfe4ea;border-radius:14px;box-shadow:0 5px 20px rgba(15,23,42,.05)}
+.panel,.account-card,.empty{padding:20px;margin-bottom:18px}
+
+/* Collapsible */
+summary{font-weight:700;cursor:pointer}
+
+/* Forms */
+.grid-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.wide{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:650}
+input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font:inherit}
+textarea{resize:vertical;line-height:1.55}
+.inline-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.inline-form label{min-width:140px}
+.inline-form input{width:auto}
+
+/* Buttons */
+button,.btn-link{border:0;border-radius:8px;background:#2563eb;color:#fff;padding:10px 15px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-size:14px;text-align:center}
+.secondary{background:#475569}
+.danger{margin-top:14px;background:#b91c1c}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Account cards */
+.account-head{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.account-head h2{display:inline-block;margin:0 10px 12px 0}
+
+/* Stats bar */
+.stats-bar{display:flex;gap:18px;padding:8px 0 4px;font-size:13px;color:#475569;flex-wrap:wrap}
+.stats-bar strong{color:#1e293b}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;background:#e2e8f0;font-size:12px}
+.badge.online{background:#dcfce7;color:#166534}
+.badge.error{background:#fee2e2;color:#991b1b}
+.badge.connecting{background:#fef3c7;color:#92400e}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.role-badge.user{background:#dbeafe;color:#1e40af}
+.role-badge.assistant{background:#dcfce7;color:#166534}
+
+/* Alerts */
+.alert{padding:10px 12px;border-radius:8px;margin:8px 0 14px;white-space:pre-wrap}
+.alert.error{background:#fff1f2;color:#9f1239}
+
+/* Utility */
+.muted{color:#64748b}
+.checkbox{flex-direction:row;align-items:center}
+.checkbox input{width:auto}
+
+/* Log viewer */
+.log-container{padding:0;overflow:hidden}
+.log-table{width:100%;font-size:13px}
+.log-header{display:grid;grid-template-columns:160px 120px 100px 70px 1fr;gap:0;padding:10px 16px;background:#f1f5f9;font-weight:700;border-bottom:2px solid #e2e8f0}
+.log-row{display:grid;grid-template-columns:160px 120px 100px 70px 1fr;gap:0;padding:8px 16px;border-bottom:1px solid #f1f5f9;align-items:start}
+.log-row:hover{background:#f8fafc}
+.log-row.assistant{background:#f0fdf4}
+.log-col-time{color:#64748b;font-family:monospace;font-size:12px}
+.log-col-chat,.log-col-user{font-family:monospace;font-size:12px;color:#475569}
+.log-col-content{word-break:break-word;line-height:1.5}
+
+/* Login */
+.login-body{min-height:100vh;display:grid;place-items:center;padding:18px}
+.login-card{width:min(420px,100%);padding:28px}
+.login-card h1{margin-top:0}
+.stack{display:grid;gap:14px}
+
+/* Responsive */
+@media(max-width:720px){
+  .grid-form{grid-template-columns:1fr}
+  .wide{grid-column:auto}
+  .account-head{align-items:flex-start;flex-direction:column}
+  .topbar{padding:16px}
+  .topbar h1{font-size:18px}
+  .log-header,.log-row{grid-template-columns:1fr;gap:4px;padding:10px 14px}
+  .log-col-time,.log-col-chat,.log-col-user{font-size:11px}
+  .log-header .log-col-chat,.log-header .log-col-user,.log-header .log-col-role{display:none}
+  .inline-form{flex-direction:column}
+}
