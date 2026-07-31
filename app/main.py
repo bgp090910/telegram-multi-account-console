@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import db
 from app.manager import AccountManager
+from app import session_web
 from app.security import (
     COOKIE_MAX_AGE,
     COOKIE_NAME,
@@ -327,3 +328,107 @@ async def api_account_stats(request: Request, account_id: int):
         "last_active_at": account.get("last_active_at", ""),
         "runtime_online": manager.is_running(account_id),
     })
+
+
+# ── Session Generator (Web) ──────────────────────────────
+
+@app.get("/session-generator", response_class=HTMLResponse)
+async def session_generator_page(request: Request):
+    if not read_login_cookie(request.cookies.get(COOKIE_NAME)):
+        return _redirect_login()
+    return templates.TemplateResponse(request, "session.html", {
+        "step": "phone",
+        "error": "",
+        "token": "",
+        "phone": "",
+        "result": None,
+    })
+
+
+@app.post("/session-generator/send-code")
+async def session_send_code(
+    request: Request,
+    phone: str = Form(...),
+):
+    if not read_login_cookie(request.cookies.get(COOKIE_NAME)):
+        return _redirect_login()
+    try:
+        result = await session_web.send_code(phone)
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "verify",
+            "error": "",
+            "token": result["token"],
+            "phone": result["phone"],
+            "result": None,
+        })
+    except RuntimeError as exc:
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "phone",
+            "error": str(exc),
+            "token": "",
+            "phone": phone,
+            "result": None,
+        })
+
+
+@app.post("/session-generator/verify")
+async def session_verify(
+    request: Request,
+    token: str = Form(...),
+    code: str = Form(...),
+    password: str = Form(""),
+):
+    if not read_login_cookie(request.cookies.get(COOKIE_NAME)):
+        return _redirect_login()
+    try:
+        result = await session_web.verify_code(token, code, password)
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "done",
+            "error": "",
+            "token": "",
+            "phone": "",
+            "result": result,
+        })
+    except RuntimeError as exc:
+        if str(exc) == "NEED_2FA":
+            return templates.TemplateResponse(request, "session.html", {
+                "step": "2fa",
+                "error": "",
+                "token": token,
+                "phone": "",
+                "result": None,
+            })
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "verify",
+            "error": str(exc),
+            "token": token,
+            "phone": "",
+            "result": None,
+        })
+
+
+@app.post("/session-generator/2fa")
+async def session_2fa(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+):
+    if not read_login_cookie(request.cookies.get(COOKIE_NAME)):
+        return _redirect_login()
+    try:
+        result = await session_web.verify_code(token, "", password)
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "done",
+            "error": "",
+            "token": "",
+            "phone": "",
+            "result": result,
+        })
+    except RuntimeError as exc:
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "2fa",
+            "error": str(exc),
+            "token": token,
+            "phone": "",
+            "result": None,
+        })

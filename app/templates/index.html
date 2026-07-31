@@ -9,7 +9,10 @@
 <body>
 <header class="topbar">
   <div><h1>Telegram 多帳號控制台</h1><span>記憶保存 {{ memory_ttl }} 小時</span></div>
-  <form method="post" action="/logout"><button class="secondary">登出</button></form>
+  <div class="actions">
+    <a href="/session-generator" class="btn-link">產生 Session</a>
+    <form method="post" action="/logout"><button class="secondary">登出</button></form>
+  </div>
 </header>
 <main class="container">
   <section class="panel">

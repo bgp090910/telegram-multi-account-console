@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>產生 Session String ｜控制台</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+  .session-card{max-width:520px;margin:20px auto}
+  .session-card h2{margin-top:0}
+  .session-card .info{padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0e7490;margin:12px 0}
+  .session-card .info a{color:#0369a1}
+  .session-card .step-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;margin-bottom:4px}
+  .code-input{letter-spacing:8px;font-size:24px;text-align:center;font-weight:700;padding:14px 11px}
+  .result-box{background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:16px;margin:16px 0}
+  .result-box textarea{width:100%;height:80px;font-family:monospace;font-size:12px;border:1px solid #bbf7d0;border-radius:8px;padding:10px;background:#fff}
+  .copy-btn{margin-top:8px;background:#16a34a}
+  .session-info{font-size:13px;color:#166534;margin:8px 0 0;font-weight:600}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1><a href="/" style="color:#fff;text-decoration:none">← 控制台</a></h1>
+    <span style="font-size:13px;color:#a5f3fc">Session 產生器</span>
+  </div>
+  <form method="post" action="/logout"><button class="secondary">登出</button></form>
+</header>
+<main class="container">
+  <section class="panel session-card">
+
+    {% if step == 'phone' %}
+    <div class="step-label">步驟 1 / 2</div>
+    <h2>發送驗證碼</h2>
+    <div class="info">
+      輸入要生成 Session String 的 Telegram 帳號手機號碼（含國碼）。<br>
+      系統會發送驗證碼到該帳號，請準備接收。
+    </div>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" action="/session-generator/send-code" class="stack">
+      <label>手機號碼
+        <input name="phone" type="tel" value="{{ phone }}" placeholder="+8613800138000" required>
+      </label>
+      <button type="submit">發送驗證碼</button>
+    </form>
+
+    {% elif step == 'verify' %}
+    <div class="step-label">步驟 2 / 2</div>
+    <h2>輸入驗證碼</h2>
+    <div class="info">
+      驗證碼已發送至 <strong>{{ phone }}</strong><br>
+      Telegram 會在短信 App、Telegram 內部或 Email 發送驗證碼，請檢查所有管道。
+    </div>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" action="/session-generator/verify" class="stack">
+      <input type="hidden" name="token" value="{{ token }}">
+      <label>驗證碼
+        <input name="code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="1 2 3 4 5" required>
+      </label>
+      <button type="submit">確認登入</button>
+    </form>
+
+    {% elif step == '2fa' %}
+    <div class="step-label">兩步驟驗證</div>
+    <h2>輸入密碼</h2>
+    <div class="info">該帳號已開啟兩步驟驗證，請輸入密碼完成登入。</div>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" action="/session-generator/2fa" class="stack">
+      <input type="hidden" name="token" value="{{ token }}">
+      <label>兩步驟驗證密碼
+        <input name="password" type="password" placeholder="你的密碼" required>
+      </label>
+      <button type="submit">確認</button>
+    </form>
+
+    {% elif step == 'done' %}
+    <div class="step-label">🎉 完成</div>
+    <h2>Session 產生成功</h2>
+    <div class="result-box">
+      <div class="session-info">
+        {% if result.username %}@{{ result.username }} · {% endif %}ID: {{ result.user_id }}
+      </div>
+      <textarea id="session-text" readonly>{{ result.session_string }}</textarea>
+      <button class="copy-btn" type="button" onclick="copySession()">複製 Session String</button>
+      <p style="font-size:12px;color:#64748b;margin-top:8px">
+        加密版本（貼到控制台的「Session String」欄位即可）：<br>
+        <textarea id="encrypted-text" readonly style="margin-top:6px;height:60px">{{ result.encrypted_session }}</textarea>
+        <button class="copy-btn" type="button" onclick="copyEncrypted()">複製加密版</button>
+      </p>
+    </div>
+    <p style="font-size:13px;color:#9f1239">
+      ⚠️ Session String 等同帳號登入憑證，請妥善保管，不要公開分享或提交到 GitHub。
+    </p>
+    <div style="margin-top:16px">
+      <a href="/" class="btn-link secondary" style="text-decoration:none">回控制台新增帳號</a>
+    </div>
+
+    {% endif %}
+  </section>
+</main>
+<script>
+function copySession() {
+  navigator.clipboard.writeText(document.getElementById('session-text').value);
+}
+function copyEncrypted() {
+  navigator.clipboard.writeText(document.getElementById('encrypted-text').value);
+}
+</script>
+</body>
+</html>
