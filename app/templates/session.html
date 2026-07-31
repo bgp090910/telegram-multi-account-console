@@ -59,6 +59,23 @@
       </label>
       <button type="submit">確認登入</button>
     </form>
+    <form method="post" action="/session-generator/resend" style="margin-top:12px">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button type="submit" class="btn-secondary" style="width:100%;padding:10px">重新發送驗證碼</button>
+    </form>
+
+    {% elif step == 'resend' %}
+    <div class="step-label">驗證碼過期</div>
+    <h2>重新發送驗證碼</h2>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <div class="info">
+      驗證碼已過期或發送次數過多，請點擊下方按鈕重新發送。
+    </div>
+    <form method="post" action="/session-generator/resend" class="stack">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button type="submit">重新發送驗證碼</button>
+    </form>
+    <a href="/session-generator" style="display:block;text-align:center;margin-top:12px;color:#64748b">使用其他手機號碼</a>
 
     {% elif step == '2fa' %}
     <div class="step-label">兩步驟驗證</div>
@@ -80,16 +97,14 @@
       <div class="session-info">
         {% if result.username %}@{{ result.username }} · {% endif %}ID: {{ result.user_id }}
       </div>
-      <textarea id="session-text" readonly>{{ result.session_string }}</textarea>
-      <button class="copy-btn" type="button" onclick="copySession()">複製 Session String</button>
-      <p style="font-size:12px;color:#64748b;margin-top:8px">
-        加密版本（貼到控制台的「Session String」欄位即可）：<br>
-        <textarea id="encrypted-text" readonly style="margin-top:6px;height:60px">{{ result.encrypted_session }}</textarea>
-        <button class="copy-btn" type="button" onclick="copyEncrypted()">複製加密版</button>
+      <p style="font-size:13px;color:#166534;margin:12px 0 8px;font-weight:600">
+        加密版 Session String（直接貼到控制台的「Session String」欄位）：
       </p>
+      <textarea id="encrypted-text" readonly style="height:80px">{{ result.encrypted_session }}</textarea>
+      <button class="copy-btn" type="button" onclick="copyEncrypted()">複製加密版</button>
     </div>
     <p style="font-size:13px;color:#9f1239">
-      ⚠️ Session String 等同帳號登入憑證，請妥善保管，不要公開分享或提交到 GitHub。
+      ⚠️ 此加密 Session String 等同帳號登入憑證，請妥善保管，不要公開分享或提交到 GitHub。
     </p>
     <div style="margin-top:16px">
       <a href="/" class="btn-link secondary" style="text-decoration:none">回控制台新增帳號</a>
@@ -99,9 +114,6 @@
   </section>
 </main>
 <script>
-function copySession() {
-  navigator.clipboard.writeText(document.getElementById('session-text').value);
-}
 function copyEncrypted() {
   navigator.clipboard.writeText(document.getElementById('encrypted-text').value);
 }

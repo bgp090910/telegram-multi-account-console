@@ -390,7 +390,8 @@ async def session_verify(
             "result": result,
         })
     except RuntimeError as exc:
-        if str(exc) == "NEED_2FA":
+        msg = str(exc)
+        if msg == "NEED_2FA":
             return templates.TemplateResponse(request, "session.html", {
                 "step": "2fa",
                 "error": "",
@@ -398,10 +399,45 @@ async def session_verify(
                 "phone": "",
                 "result": None,
             })
+        if msg == "EXPIRED":
+            # 驗證碼過期，顯示重新發送選項
+            return templates.TemplateResponse(request, "session.html", {
+                "step": "resend",
+                "error": "驗證碼已過期或被耗盡，請點擊「重新發送驗證碼」",
+                "token": token,
+                "phone": "",
+                "result": None,
+            })
         return templates.TemplateResponse(request, "session.html", {
             "step": "verify",
-            "error": str(exc),
+            "error": msg,
             "token": token,
+            "phone": "",
+            "result": None,
+        })
+
+
+@app.post("/session-generator/resend")
+async def session_resend(
+    request: Request,
+    token: str = Form(...),
+):
+    if not read_login_cookie(request.cookies.get(COOKIE_NAME)):
+        return _redirect_login()
+    try:
+        result = await session_web.resend_code(token)
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "verify",
+            "error": "",
+            "token": result["token"],
+            "phone": result["phone"],
+            "result": None,
+        })
+    except RuntimeError as exc:
+        return templates.TemplateResponse(request, "session.html", {
+            "step": "phone",
+            "error": str(exc),
+            "token": "",
             "phone": "",
             "result": None,
         })
